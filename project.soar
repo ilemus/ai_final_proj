@@ -1,31 +1,78 @@
-sp {
-    propose*hello-world
-    (state <s> ^type state)
+#water-jug*propose*initialize-water-jug
+#If no task is selected,
+#then propose the initialize-water-jug operator.
+sp { propose*initialize-water-jug
+    (state <s> ^superstate nil)
+    -(<s> ^name)
     -->
     (<s> ^operator <o> +)
-    (<o> ^name hello-world)
+    (<o> ^name init-water-jug)
 }
 
-sp {
-    apply*hello-world(state <s> ^operator <o>)
-    (<o> ^name goodbye-world)
+#apply the proposed operator
+sp { apply*initialize-water-jug
+    (state <s> ^operator.name init-water-jug)
     -->
-    (write |IS this the real life, or IS it a fantasy|)
-    (halt)
+    (<s> ^name the-jug
+        ^jug <j1>
+        ^jug <j2>)
+    (<j1> ^volume 5
+        ^contents 0)
+    (<j2> ^volume 3
+        ^contents 0)
 }
 
-sp {
-    hello-world
-    (state <s> ^type state)
+#add a type called empty
+sp { elaborate*water-jug
+    (state <s> ^name water-jug
+        ^jug <j>)
+    (<j> ^volume <v>
+        ^contents <c>)
     -->
-    (write |HELLO WORLD\nTHIS IS GR8|)
-    (halt)
+    (<j> ^empty (- <v> <c>))
 }
 
-sp {
-    goodbye-world
-    (state <s> ^type state)
+#propose to fill a jug that is not full
+sp {propose*fill-empty
+    (state <s> ^name water-jug
+        ^jug <j>)
+    (<j> ^empty > 0)
     -->
-    (write |Goodby World, there is no future here|)
-    (halt)
+    (<s> ^operator <o> +)
+    (<o> ^name fill-empty
+        ^fil-jug <j>)
+
 }
+
+#propose emptying a non empty jug
+sp {propose*empty-full
+    (state <s> ^name water-jug
+        ^jug <j>)
+    (<j> ^contents > 0)
+    -->
+    (<s> ^operator <o> +)
+    (<o> ^name empty-full
+        ^empty-jug <j>)
+
+}
+
+#if there is a jug that is not full and the other is not empty, propose pouring from the second jug into the first
+sp {
+    (state <s> ^name water-jug
+        ^jug <i>
+        ^jug {<> <i> <j>})
+    (<i> ^contents > 0)
+    (<j> ^empty > 0)
+    -->
+    (<s> ^operator <o> +)
+    (<o> ^name pour
+        ^empty-jug <i>
+        ^fil-jug <j>)
+}
+
+
+
+
+
+
+
