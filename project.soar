@@ -1,0 +1,31 @@
+sp {
+    propose*hello-world
+    (state <s> ^type state)
+    -->
+    (<s> ^operator <o> +)
+    (<o> ^name hello-world)
+}
+
+sp {
+    apply*hello-world(state <s> ^operator <o>)
+    (<o> ^name goodbye-world)
+    -->
+    (write |IS this the real life, or IS it a fantasy|)
+    (halt)
+}
+
+sp {
+    hello-world
+    (state <s> ^type state)
+    -->
+    (write |HELLO WORLD\nTHIS IS GR8|)
+    (halt)
+}
+
+sp {
+    goodbye-world
+    (state <s> ^type state)
+    -->
+    (write |Goodby World, there is no future here|)
+    (halt)
+}
