@@ -1,0 +1,36 @@
+#move-to-food
+sp {propose*move-to-food
+(state <s> ^io.input-link.my-location.<dir>.content
+    << normalfood bonusfood >>)
+    -->
+    (<s> ^operator <o> + =)
+    (<o> ^name move-to-food
+        ^direction <dir>)}
+
+#apply move to food
+sp {apply*move-to-food
+    (state <s> ^io.output-link <out>
+        ^operator (^name move-to-food
+        ^direction <dir>))
+    -->
+    (<out> ^move.direction <dir>)}
+ 
+ #undo move to normalfood if bonusfood is present
+ sp { apply*override-when-bonusfood_is_found
+    (state <s> ^operator.name move-to-food)
+    (^io.input-link.my-location.<dir>.content bonusfood)
+    -->
+    (write |got to bonus food|)
+ }
+ 
+ #in order to catch the last fill op do this
+sp { apply*record_last_operator-pour
+    (state <s> ^name water-jug
+    ^operator <o>)
+    (<o> ^name fill
+        ^fill-jug <fj>)
+    -->
+    (<s> ^last-operator <last-op>)
+    (<last-op> ^name fill
+        ^fill-jug <fj>)
+}
