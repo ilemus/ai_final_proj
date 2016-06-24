@@ -80,3 +80,36 @@ sp {propose*jump
     (<o> ^name jump
         ^direction <dir>
         ^content <content>)}
+
+#a structure containing all the IOS
+^io
+    ^input-link
+        ^eater
+            ^direction east/north/south/west
+            ^name red/blue/yellow/green/purple/black
+            ^score 0-1000
+            ^x 1-15
+            ^y 1-15
+        ^my-location 
+            ^content bonusfood/normalfood/eater/empty/wall
+            ^east
+                ^content bonusfood/normalfood/eater/empty/wall
+                ...
+            ^north
+                ^content bonusfood/normalfood/eater/empty/wall
+                ...
+            ^south
+                ^content bonusfood/normalfood/eater/empty/wall
+                ...
+            ^west
+                ^content bonusfood/normalfood/eater/empty/wall
+                ...
+    ^output-link
+        ^move
+            ^direction east/north/south/west
+            ^status complete - created by Soar as feedback
+        ^jump
+            ^direction east/north/south/west
+            ^status complete - created by Soar as feedback
+^superstate nil 
+^type state
