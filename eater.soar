@@ -1,11 +1,20 @@
 
 #in order to move-north we must propose it, and then apply it
+#plz dont use this
 sp {propose*move-north
     (state <s> ^type state)
     -->
     (<s> ^operator <o> +)
     (<o> ^name move-north)
 }
+
+#this is better
+sp {propose*move-north
+(state <s> ^io.input-link.eater <e>)
+(<e> ^x <x> ^y <y>)
+-->
+(<s> ^operator <o> +)
+(<o> ^name move-north)}
 
 #apply the proposal to move north
 sp {apply*move-north
@@ -14,3 +23,60 @@ sp {apply*move-north
     -->
     (<out> ^move.direction north)
 }
+
+#usage of making proposal for normal foods
+sp {propose*move-to-normalfood
+    (state <s> ^io.input-link.my-location.<dir>.content normalfood)
+    -->
+    (<s> ^operator <o> + =)
+    (<o> ^name move-to-food
+    ^direction <dir>)}
+
+#much nicer move to direction
+sp {apply*move-to-food
+    (state <s> ^io.output-link <out>
+        ^operator <o>)
+    (<o> ^name move-to-food
+    ^direction <dir>)
+    -->
+    (<out> ^move.direction <dir>)}
+
+#I guess this is protocol?
+sp {apply*move-to-food*remove-move
+    (state <s> ^io.output-link <out>
+        ^operator.name move-to-food)
+    (<out> ^move <move>)
+    (<move> ^status complete)
+    -->
+    (<out> ^move <move> -)}
+
+#you can have a double variable? sure why not
+sp {propose*move-to-food
+(state <s> ^io.input-link.my-location.<dir>.content
+    << normalfood bonusfood >>)
+    -->
+    (<s> ^operator <o> + =)
+    (<o> ^name move
+        ^direction <dir>)}
+
+#there exists a way to reject a move therin undoing a proposal
+sp {select*move*reject*backward
+    (state <s> ^operator <o> +
+        ^directions <d>
+        ^last-direction <dir>)
+    (<d> ^value <dir>
+        ^opposite <o-dir>)
+    (<o> ^name move
+        ^direction <o-dir>)
+    -->
+    (<s> ^operator <o> -)}
+
+#how to jump and wall?
+sp {propose*jump
+(state <s> ^io.input-link.my-location.<dir>.<dir>.content
+        { <content> <> wall })
+    -->
+    (<s> ^operator <o> + =)
+    (<o> ^name jump
+        ^direction <dir>
+        ^content <content>)}
