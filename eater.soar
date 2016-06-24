@@ -1,0 +1,16 @@
+
+#in order to move-north we must propose it, and then apply it
+sp {propose*move-north
+    (state <s> ^type state)
+    -->
+    (<s> ^operator <o> +)
+    (<o> ^name move-north)
+}
+
+#apply the proposal to move north
+sp {apply*move-north
+    (state <s> ^operator.name move-north)
+        ^io.^output-link <out>)
+    -->
+    (<out> ^move.direction north)
+}

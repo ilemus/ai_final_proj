@@ -13,7 +13,7 @@ sp { propose*initialize-water-jug
 sp { apply*initialize-water-jug
     (state <s> ^operator.name init-water-jug)
     -->
-    (<s> ^name the-jug
+    (<s> ^name water-jug
         ^jug <j1>
         ^jug <j2>)
     (<j1> ^volume 5
@@ -33,42 +33,238 @@ sp { elaborate*water-jug
 }
 
 #propose to fill a jug that is not full
-sp {propose*fill-empty
+sp {propose*fill
     (state <s> ^name water-jug
         ^jug <j>)
     (<j> ^empty > 0)
     -->
-    (<s> ^operator <o> +)
-    (<o> ^name fill-empty
-        ^fil-jug <j>)
+    (<s> ^operator <o> + =)
+    (<o> ^name fill
+        ^fill-jug <j>)
 
 }
 
 #propose emptying a non empty jug
-sp {propose*empty-full
+sp {propose*empty
     (state <s> ^name water-jug
         ^jug <j>)
     (<j> ^contents > 0)
     -->
-    (<s> ^operator <o> +)
-    (<o> ^name empty-full
+    (<s> ^operator <o> + =)
+    (<o> ^name empty
         ^empty-jug <j>)
 
 }
 
 #if there is a jug that is not full and the other is not empty, propose pouring from the second jug into the first
-sp {
+sp {propose*pour
     (state <s> ^name water-jug
         ^jug <i>
         ^jug {<> <i> <j>})
     (<i> ^contents > 0)
     (<j> ^empty > 0)
     -->
-    (<s> ^operator <o> +)
+    (<s> ^operator <o> + =)
     (<o> ^name pour
         ^empty-jug <i>
-        ^fil-jug <j>)
+        ^fill-jug <j>)
 }
+
+#the fill operator
+sp {apply*fill
+    (state <s> ^name water-jug
+        ^operator <o>
+        ^jug <j>)
+    (<o> ^name fill
+        ^fill-jug <j>)
+    (<j> ^volume <v>
+        ^contents <c>)
+    -->
+    (<j> ^contents <v>)
+    (<j> ^contents <c> -)}
+
+#the empty operator
+sp {apply*empty
+    (state <s> ^name water-jug
+        ^operator <o>
+        ^jug <j>)
+    (<o> ^name empty
+        ^empty-jug <j>)
+    (<j> ^volume <v>
+        ^contents <c>)
+    -->
+    (<j> ^contents 0)
+    (<j> ^contents <c> -)
+}
+
+#the pour algorithm one can fill and become empty or one can fill and have some leftover
+sp {apply*pour*to-empty-empty_jug
+    (state <s> ^name water-jug
+        ^operator <o>)
+    (<o> ^name pour
+        ^empty-jug <i>
+        ^fill-jug <j>)
+    (<j> ^volume <jvol>
+        ^contents <jcon>
+        ^empty <jemp>)
+    (<i> ^volume <ivol>
+        ^contents {<icon> <= <jemp> })
+    -->
+    (<i> ^contents 0
+        ^contents <icon> -)
+    (<j> ^contents (+ <jcon> <icon>)
+        ^contents <jcon> -)
+}
+
+#the pour algorithm one can fill and become empty or one can fill and have some leftover
+sp {apply*pour*to-not_empty-empty_jug
+    (state <s> ^name water-jug
+        ^operator <o>)
+    (<o> ^name pour
+        ^empty-jug <i>
+        ^fill-jug <j>)
+    (<j> ^volume <jvol>
+        ^contents <jcon>
+        ^empty <jemp>)
+    (<i> ^volume <ivol>
+        ^contents {<icon> > <jemp> })
+    -->
+    (<i> ^contents (- <icon> <jemp>)
+        ^contents <icon> -)
+    (<j> ^contents <jvol>
+        ^contents <jcon> -)
+}
+
+#has goal been found..lets see!
+sp {detect*goal_acheived
+    (state <s> ^name water-jug
+        ^jug <j>)
+    (<j> ^volume 3
+        ^contents 1)
+    -->
+    (write |The problem has been solved|)
+    (halt)
+}
+
+#in order to catch the last pour op do this
+sp { apply*record_last_operator-pour
+    (state <s> ^name water-jug
+    ^operator <o>)
+    (<o> ^name pour
+        ^fill-jug <fj>
+        ^empty-jug <ej>)
+    -->
+    (<s> ^last-operator <last-op>)
+    (<last-op> ^name pour
+        ^fill-jug <fj>
+        ^empty-jug <ej>)
+}
+
+#in order to catch the last empty op do this
+sp { apply*record_last_operator-pour
+    (state <s> ^name water-jug
+    ^operator <o>)
+    (<o> ^name empty
+        ^empty-jug <ej>)
+    -->
+    (<s> ^last-operator <last-op>)
+    (<last-op> ^name empty
+        ^empty-jug <ej>)
+}
+
+#in order to catch the last fill op do this
+sp { apply*record_last_operator-pour
+    (state <s> ^name water-jug
+    ^operator <o>)
+    (<o> ^name fill
+        ^fill-jug <fj>)
+    -->
+    (<s> ^last-operator <last-op>)
+    (<last-op> ^name fill
+        ^fill-jug <fj>)
+}
+
+#in order to prevent the redoing of pour
+sp { apply*remove_last_operator-pour
+    (state <s> ^name water-jug
+        ^operator <o>
+        ^last-operator <last-op>)
+    (<o> ^name pour
+        ^fill-jug <fj>
+        ^empty-jug <ej>)
+    -(<last-op> ^name pour
+        ^fill-jug <fj>
+        ^empty-jug <ej>)
+    -->
+    (<s> ^last-operator <last-op> -)
+}
+
+#last operator is empty then dont fill
+sp { select*avoid_inverse_fill
+    (state <s> ^name water-jug
+        ^operator <o> +
+        ^last-operator <lo>)
+    (<o> ^name fill ^fill-jug <i>)
+    (<lo> ^name empty ^empty-jug <i>)
+    -->
+    (<s> ^operator <o> <)
+}
+
+#last operator is fill then dont empty
+sp { select*avoid_inverse_empty
+    (state <s> ^name water-jug
+        ^operator <o> +
+        ^last-operator <lo>)
+    (<o> ^name empty ^empty-jug <i>)
+    (<lo> ^name fill ^fill-jug <i>)
+    -->
+    (<s> ^operator <o> <)
+}
+
+#last operator is pour then dont pour
+sp { select*avoid_inverse_pour
+    (state <s> ^name water-jug
+        ^operator <o> +
+        ^last-operator <lo>)
+    (<o> ^name pour ^fill-jug <j>)
+    (<lo ^name pour ^empty-jug <j>)
+    -->
+    (<s> ^operator <o> <)
+}
+
+#SECTION TO MONITOR______________________________
+sp {water-jug*monitor*state
+(state <s> ^name water-jug
+^jug <i> <j>)
+(<i> ^volume 3 ^contents <icon>)
+(<j> ^volume 5 ^contents <jcon>)
+-->
+(write (crlf) | 3:| <icon> | 5:| <jcon> )}
+sp {water-jug*monitor*operator-application*empty
+(state <s> ^name water-jug
+^operator <o>)
+(<o> ^name empty
+^empty-jug.volume <volume>)
+-->
+(write | EMPTY(| <volume> |)|)}
+sp {water-jug*monitor*operator-application*fill
+(state <s> ^name water-jug
+^operator <o>)
+(<o> ^name fill
+^fill-jug.volume <volume>)
+-->
+(write | FILL(| <volume> |)|)}
+sp {water-jug*monitor*operator-application*pour
+(state <s> ^name water-jug
+^operator <o>)
+(<o> ^name pour
+^empty-jug <i>
+^fill-jug <j>)
+(<i> ^volume <ivol> ^contents <icon>)
+(<j> ^volume <jvol> ^contents <jcon>)
+-->
+(write | POUR(| <ivol> |:| <icon> |,| <jvol> |:| <jcon> |)|)}
+#SECTION END MONITOR______________________________
 
 
 
