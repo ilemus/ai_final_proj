@@ -1,3 +1,36 @@
+sp {propose*move-to-food
+   (state <s> ^io.input-link.my-location.<dir>.content 
+                 << normalfood bonusfood >>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name move-to-food
+        ^direction <dir>)}
+
+# Apply*move-to-food
+# If the move-to-food operator for a direction is selected,
+#    generate an output command to move in that direction.
+
+sp {apply*move-to-food
+   (state <s> ^io.output-link <ol>
+              ^operator <o>)
+   (<o> ^name move-to-food
+        ^direction <dir>)
+-->
+   (<ol> ^move.direction <dir>)}
+
+# Apply*move-to-food*remove-move:
+# If the move-to-food operator is selected,
+#    and there is a completed move command on the output link,
+#    then remove that command.
+
+sp {apply*move-to-food*remove-move
+   (state <s> ^io.output-link <ol>
+              ^operator.name move-to-food)
+   (<ol> ^move <move>)
+   (<move> ^status complete)
+-->
+   (<ol> ^move <move> -)}
+
 ############################################################################
 # These are the final versions of the rules for the jump and move operator.
 
@@ -57,6 +90,17 @@ sp {select*compare*best*value
    (<s> ^operator <o1> > <o2>)}
 
 ## General operator application rules
+
+#in order to catch the last direction op do this
+sp {apply*record_last_direction
+    (state <s> ^operator <o>
+              ^io.output-link <ol>)
+    (<o> ^actions <act>)
+    (<act> ^<att> <value>)
+    -->
+    (<s> ^last-direction <last-dir>)
+    (<last-dir> ^dir <value>)
+}
 
 sp {apply*operator*create-action-command
    (state <s> ^operator <o>
